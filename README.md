@@ -15,8 +15,8 @@ Sistema de visión por computadora para monitoreo inteligente de mesas en tiempo
 
 1. Clonar el repositorio y entrar al directorio:
    ```bash
-   git clone <URL_DEL_REPOSITORIO>
-   cd "Expo Programacion Avanzada"
+   git clone https://github.com/JhonatanM2005/gastroforge-vision.git
+   cd gastroforge-vision
    ```
 
 2. (Opcional pero recomendado) Crear y activar entorno virtual:

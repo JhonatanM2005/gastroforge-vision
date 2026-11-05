@@ -85,30 +85,34 @@
 
 ## Bloque IV: Demostración en Vivo del MVP (20:00 - 30:00)
 
-### Paso 1: Ejecución del Pipeline con Video y Salida Anotada
-Ejecutar en la terminal ante el jurado:
+### Paso 1: Ejecución del Pipeline con Video y Transmisión a la API
+Ejecutar en la terminal ante el jurado (con el backend y frontend de GastroForge ya activos):
 ```bash
-python -m src.table_monitor.cli analizar --fuente "docs/Archive/input/restaurant.mp4" --mesas "config/mesas_restaurant.json" --salida "output/demo_en_vivo" --cada 3 --t-ocupar 3 --t-liberar 5 --simular-bano "Mesa 1" --mostrar
+python -m src.table_monitor.cli analizar --fuente "input/restaurant.mp4" --mesas "config/mesas_restaurant.json" --api-url "http://localhost:3000/api/v1/telemetry/ingest" --mostrar --cada 2
 ```
 
-### Paso 2: Puntos a Señalar en la Pantalla
-1. **HUD Superior:** Mostrar cómo el panel contabiliza en tiempo real: Libres, Ocupadas, Por Recoger, Pausa (Baño) y el porcentaje de ocupación.
-2. **Difuminado de Privacidad:** Señalar cómo los rostros/cuerpos de los comensales se difuminan automáticamente mediante desenfoque gaussiano, demostrando cumplimiento de la Ley 1581 de 2012.
-3. **Cronómetro sobre las Mesas:** Mostrar el tiempo de ocupación en formato `HH:MM:SS` sobre cada polígono activo.
-4. **Alerta de Primer Servicio:** Mostrar en la consola la alerta `FIRST_SERVICE_SERVED` cuando la vajilla es detectada sobre la mesa.
+### Paso 2: Puntos a Señalar en la Pantalla y en el Frontend
+1. **Ventana OpenCV en Vivo:**
+   - **HUD Superior:** Panel en tiempo real contabilizando: Libres, Ocupadas, Por Recoger y Porcentaje de Ocupación.
+   - **Difuminado de Privacidad:** Protección biométrica irreversible de rostros conforme a la Ley 1581 de 2012.
+   - **Halo Chair-Aware:** Detección de comensales sentados junto al borde de la mesa, filtrando transeúntes del pasillo ($h/w > 1.90$).
+2. **Dashboard Web en Vivo ([http://localhost:5173](http://localhost:5173)):**
+   - **Pestaña Telemetría Visión:** Auto-sondeo cada 3s recibiendo los cambios de estado en caliente.
+   - **Ruta Óptima de Dijkstra:** Clic en cualquier mesa para desplegar el trayecto mínimo desde cocina (`kitchen -> passage -> table-1` = 12s) en $\mathcal{O}((V+E)\log V)$.
+   - **Cola de Prioridad MinHeap:** Demostración de jerarquización $\mathcal{O}(\log n)$ de mesas críticas que demandan intervención inmediata.
 
 ### Paso 3: Inspección de los Resultados Generados
-Abrir los archivos generados en `output/demo_en_vivo/`:
-- **`gastroforge_telemetry.json`:** Explicar cómo este JSON alimenta los dashboards de GastroForge con KPIs consolidados.
-- **`gastroforge_sessions.csv`:** Mostrar la trazabilidad de cada sesión: hora de inicio, hora de fin, duración, TPA y TRM.
-- **`gastroforge_alerts.json`:** Mostrar el registro histórico de eventos operativos y alertas de higiene.
+Mostrar la exportación local y el registro analítico:
+- **`output/analisis/gastroforge_telemetry.json`:** Snapshot estructurado de telemetría y diagnósticos de sala.
+- **`output/analisis/gastroforge_sessions.csv`:** Trazabilidad histórica tabular con marcas de tiempo, TPA y TRM.
+- **`output/analisis/gastroforge_alerts.json`:** Registro cronológico de alertas operativas e incidencias de higiene.
 
 ### Paso 4: Ejecución de las Pruebas Unitarias
 Demostrar la solidez y verificación del software ejecutando la suite de pruebas:
 ```bash
 python -m pytest tests/ -v
 ```
-*(Señalar al jurado que los 10 tests unitarios verifican matemáticamente la máquina de estados, el debounce, el caso del baño y los algoritmos geométricos).*
+*(Señalar al jurado que las 14 pruebas unitarias en Python, junto a las 106 pruebas en NestJS y 18 en Vitest, verifican integralmente la máquina de estados, el debounce, la sincronización HTTP y los algoritmos geométricos).*
 
 ---
 
@@ -146,4 +150,7 @@ python -m pytest tests/ -v
 
 ### P4: ¿Cómo se comunica este MVP con GastroForge-Academic?
 > **Respuesta:**  
-> "El módulo genera reportes desacoplados en formato JSON y CSV siguiendo la convención de nodos de sala (`table-1`, `table-2`, `terrace`) definida en los modelos de grafos de GastroForge. Este esquema permite que la API de GastroForge actualice automáticamente el grafo de ruteo de pedidos y los dashboards de métricas operativas sin acoplamiento directo entre el código de visión y la base de datos."
+> "La comunicación es Full-Stack y desacoplada mediante una arquitectura basada en contratos HTTP REST:  
+> 1. El motor de visión en Python expone el cliente `sync_telemetry_to_api`, transmitiendo paquetes JSON validados contra el DTO `IngestTelemetryDto` en el endpoint `POST /api/v1/telemetry/ingest` de NestJS.  
+> 2. En el backend, el estado de cada mesa se conecta con los algoritmos de la asignatura: el algoritmo de **Dijkstra** ($\mathcal{O}((V+E)\log V)$) calcula la ruta óptima desde la cocina (`kitchen`) hacia la mesa en segundos, y una cola de prioridad basada en un montículo binario (**MinHeap** $\mathcal{O}(\log n)$) ordena las mesas que requieren atención urgente (incidentes de higiene, vajilla pendiente de desbarase y demora de primer plato TPA).  
+> 3. En el frontend (React + Tailwind), un panel dedicado con auto-sondeo consume esta telemetría en tiempo real y permite inspeccionar interactivamente las rutas y métricas operativas."
